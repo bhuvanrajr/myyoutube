@@ -1,18 +1,53 @@
-import React, { useState } from 'react'
-import { useDispatch } from "react-redux"
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from "react-redux"
 import SearchIcn from "../images/searchIcn.jpg"
 import UserIcn from "../images/userIcn.png"
 import { toggleSidebar } from "../utilities/SidebarSlice"
+import {GetData} from "../utilities/GetData"
+import {YOUTUBE_SEARCH_QRY} from "../utilities/Constants"
+import { AddSearchResults } from "../utilities/SearchResultSlice"
+
+
 
 
 const Header = () => {
   const dispatcher = useDispatch();
-  const [searchTxt, SetSearchTxt] = useState("Search");
+  const storedSearchResults = useSelector(store => store.searchResults);
+  const [searchTxt, SetSearchTxt] = useState("");
+  const [searchResult, SetSearchResult] = useState({});
+  const [showSearchResults, SetShowSearchResults] = useState(false);
+  
+  async function GetSuggestions(searchText){
+    if(searchText!== "" && storedSearchResults[searchText]===undefined)
+    {
+      const data =  await GetData(YOUTUBE_SEARCH_QRY+searchText);
+      dispatcher(AddSearchResults({
+        [searchText]:data[1]
+      }));
+      SetSearchResult(data[1]);
+    }
+    else
+    {
+      SetSearchResult(storedSearchResults[searchText]);
+    }
+  }
+
+  useEffect(()=>{
+    const timer = setTimeout(
+      ()=>{
+        GetSuggestions(searchTxt);
+      }
+    , 200);
+    return ()=>{
+      clearTimeout(timer);
+    }
+    
+  },[searchTxt]);
 
   return (
-    <div className='grid grid-flow-col m-2 p-2'>
+
+      <div className='grid grid-flow-col m-2 p-2'>
         <div className='flex col-span-1'>
-          
             <img 
                 className='h-5 cursor-pointer' 
                 alt='menu' 
@@ -26,21 +61,43 @@ const Header = () => {
                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/YouTube_Logo_2017.svg/2560px-YouTube_Logo_2017.svg.png"/>
             </a>
         </div>
-        <div className='flex col-span-10 px-40'>
+        <div className=" col-span-10 px-40">
+        <div className='flex w-[100%]'>
             <input className=" w-4/5 rounded-l-full h-9 
             border border-gray-400 text-gray-600 
             indent-3 focus:outline-none focus:border-gray-400 block rounded-md sm:text-sm" 
             value={searchTxt} 
+            placeholder="Search"
             type="text"
-            onFocus={()=>{SetSearchTxt("");}}
+            onFocus={()=>{
+              SetShowSearchResults(true);
+            }}
+            onBlur ={ ()=>{
+              SetShowSearchResults(false);
+            }}
             onChange = {(e)=>{SetSearchTxt(e.target.value);}}></input>
-            <button className='border border-gray-400 rounded-r-full w-10'>
+            <button className='border border-gray-400 rounded-r-full w-10' onClick={()=>{}}>
               <img className='h-5 mx-2' 
               alt='logo' 
               src={SearchIcn}
               />
             </button>
         </div>
+        {showSearchResults && (
+            <div className="fixed bg-white w-[42%] shadow-lg rounded-lg border border-gray-100">
+              <ul>
+              {
+                searchResult?.map((s)=>(
+                  <li key={s} className="py-2 px-3 shadow-sm hover:bg-gray-100">
+                    {s}
+                  </li>
+                ))
+              }
+              </ul>
+            </div>
+          )
+        }
+    </div>
         <div className="col-span-1">
         <img
           className="h-8"

@@ -5,6 +5,7 @@ import Body from './components/Body';
 import { Provider } from "react-redux";
 import Store from "./utilities/Store";
 import { createBrowserRouter, Outlet } from "react-router-dom";
+import WatchVideo from "./components/WatchVideo"
 
 function App() {
   return (
@@ -26,6 +27,10 @@ export const myRoute = createBrowserRouter([
       {
         path:"/",
         element:<Body />,
+      },
+      {
+        path:"/watch",
+        element:<WatchVideo />
       }
     ]
   }
